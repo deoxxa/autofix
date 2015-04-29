@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-var LINTER_REGEXP = regexp.MustCompile(`^(.+?): line (\d+), col (\d+), Error - (.+?) \((.+?)\)$`)
+var LINTER_REGEXP = regexp.MustCompile(`^(.+?): line (\d+), col (\d+), (?:Warning|Error) - (.+?) \((.+?)\)$`)
 
 type compactEntry struct {
 	file        string
