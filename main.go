@@ -89,8 +89,14 @@ func main() {
 				lines[e.line-1] = lines[e.line-1][0:e.col] + lines[e.line-1][e.col+1:]
 				fmt.Printf("%s\n", lines[e.line-1])
 
+				printed := false
 				for i := range l {
 					if l[i].line == e.line && l[i].col > e.col {
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
 						l[i].col -= 1
 					}
 				}
@@ -101,42 +107,136 @@ func main() {
 				lines[e.line-1] = lines[e.line-1][0:e.col] + "," + lines[e.line-1][e.col:]
 				fmt.Printf("%s\n", lines[e.line-1])
 
+				printed := false
 				for i := range l {
 					if l[i].line == e.line && l[i].col > e.col {
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
 						l[i].col += 1
 					}
 				}
-			case e.module == "comma-spacing" && strings.HasPrefix(e.err, "A space is required after"), e.module == "key-spacing" && strings.HasPrefix(e.err, "Missing space before value for key"):
+			case e.module == "comma-spacing" && strings.HasPrefix(e.err, "A space is required after"):
+				fmt.Printf("\naction: add space at %d, %d\n\n", e.line, e.col)
+
+				fmt.Printf("%s\n", lines[e.line-1])
+				lines[e.line-1] = lines[e.line-1][0:e.col+1] + " " + lines[e.line-1][e.col+1:]
+				fmt.Printf("%s\n", lines[e.line-1])
+
+				printed := false
+				for i := range l {
+					if l[i].line == e.line && l[i].col > e.col {
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
+						l[i].col += 1
+					}
+				}
+			case e.module == "key-spacing" && strings.HasPrefix(e.err, "Missing space before value for key"):
 				fmt.Printf("\naction: add space at %d, %d\n\n", e.line, e.col)
 
 				fmt.Printf("%s\n", lines[e.line-1])
 				lines[e.line-1] = lines[e.line-1][0:e.col] + " " + lines[e.line-1][e.col:]
 				fmt.Printf("%s\n", lines[e.line-1])
 
+				printed := false
 				for i := range l {
 					if l[i].line == e.line && l[i].col > e.col {
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
 						l[i].col += 1
 					}
 				}
 			case e.module == "no-multi-spaces" && strings.HasPrefix(e.err, "Multiple spaces found"):
 				fmt.Printf("\naction: remove spaces before %d, %d\n\n", e.line, e.col)
 
-				// start just before the linter position
-				col := e.col - 1
-				// search backwards until we find a non-space character
-				for lines[e.line-1][col] == ' ' {
-					col--
+				n := 1
+				for {
+					if lines[e.line-1][e.col-1-n] != ' ' {
+						break
+					}
+
+					n++
 				}
-				// skip forward, back into the whitespace
-				col += 1
 
 				fmt.Printf("%s\n", lines[e.line-1])
-				lines[e.line-1] = lines[e.line-1][0:col] + " " + lines[e.line-1][e.col:]
+				lines[e.line-1] = lines[e.line-1][:e.col-n] + " " + lines[e.line-1][e.col:]
 				fmt.Printf("%s\n", lines[e.line-1])
 
+				printed := false
 				for i := range l {
 					if l[i].line == e.line && l[i].col > e.col {
-						l[i].col -= (e.col - col) - 1
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
+						l[i].col -= n - 1
+					}
+				}
+			case e.module == "space-in-brackets" && strings.HasPrefix(e.err, "There should be no space after"):
+				fmt.Printf("\naction: remove spaces after %d, %d\n\n", e.line, e.col)
+
+				n := 0
+				for {
+					if lines[e.line-1][e.col+1+n] != ' ' {
+						break
+					}
+
+					n++
+				}
+
+				fmt.Printf("%s\n", lines[e.line-1])
+				lines[e.line-1] = lines[e.line-1][:e.col+1] + lines[e.line-1][e.col+1+n:]
+				fmt.Printf("%s\n", lines[e.line-1])
+
+				printed := false
+				for i := range l {
+					if l[i].line == e.line && l[i].col > e.col {
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
+						fmt.Printf("# adjusting operation at %d to %d\n", l[i].col, l[i].col-n)
+
+						l[i].col -= n
+					}
+				}
+			case e.module == "space-in-brackets" && strings.HasPrefix(e.err, "There should be no space before"):
+				fmt.Printf("\naction: remove spaces before %d, %d\n\n", e.line, e.col)
+
+				n := 1
+				for {
+					if lines[e.line-1][e.col-1-n] != ' ' {
+						break
+					}
+
+					n++
+				}
+
+				fmt.Printf("%s\n", lines[e.line-1])
+				lines[e.line-1] = lines[e.line-1][:e.col-n] + lines[e.line-1][e.col:]
+				fmt.Printf("%s\n", lines[e.line-1])
+
+				printed := false
+				for i := range l {
+					if l[i].line == e.line && l[i].col > e.col {
+						if !printed {
+							fmt.Printf("\n")
+							printed = true
+						}
+
+						fmt.Printf("# adjusting operation at %d to %d\n", l[i].col, l[i].col-n)
+
+						l[i].col -= n
 					}
 				}
 			}
