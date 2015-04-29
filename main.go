@@ -83,7 +83,7 @@ func main() {
 		for _, e := range l {
 			switch {
 			case e.module == "comma-dangle" && e.err == "Unexpected trailing comma":
-				fmt.Printf("\nremove comma at %d, %d\n\n", e.line, e.col)
+				fmt.Printf("\naction: remove character at %d, %d\n\n", e.line, e.col)
 
 				fmt.Printf("%s\n", lines[e.line-1])
 				lines[e.line-1] = lines[e.line-1][0:e.col] + lines[e.line-1][e.col+1:]
@@ -95,7 +95,7 @@ func main() {
 					}
 				}
 			case e.module == "comma-dangle" && e.err == "Missing trailing comma":
-				fmt.Printf("\nadd comma at %d, %d\n\n", e.line, e.col)
+				fmt.Printf("\naction: add comma at %d, %d\n\n", e.line, e.col)
 
 				fmt.Printf("%s\n", lines[e.line-1])
 				lines[e.line-1] = lines[e.line-1][0:e.col] + "," + lines[e.line-1][e.col:]
@@ -106,8 +106,8 @@ func main() {
 						l[i].col += 1
 					}
 				}
-			case e.module == "key-spacing" && strings.HasPrefix(e.err, "Missing space before value for key"):
-				fmt.Printf("\nadd space at %d, %d\n\n", e.line, e.col)
+			case e.module == "comma-spacing" && strings.HasPrefix(e.err, "A space is required after"), e.module == "key-spacing" && strings.HasPrefix(e.err, "Missing space before value for key"):
+				fmt.Printf("\naction: add space at %d, %d\n\n", e.line, e.col)
 
 				fmt.Printf("%s\n", lines[e.line-1])
 				lines[e.line-1] = lines[e.line-1][0:e.col] + " " + lines[e.line-1][e.col:]
@@ -119,15 +119,24 @@ func main() {
 					}
 				}
 			case e.module == "no-multi-spaces" && strings.HasPrefix(e.err, "Multiple spaces found"):
-				fmt.Printf("\nremove space at %d, %d\n\n", e.line, e.col)
+				fmt.Printf("\naction: remove spaces before %d, %d\n\n", e.line, e.col)
+
+				// start just before the linter position
+				col := e.col - 1
+				// search backwards until we find a non-space character
+				for lines[e.line-1][col] == ' ' {
+					col--
+				}
+				// skip forward, back into the whitespace
+				col += 1
 
 				fmt.Printf("%s\n", lines[e.line-1])
-				lines[e.line-1] = lines[e.line-1][0:e.col-1] + lines[e.line-1][e.col:]
+				lines[e.line-1] = lines[e.line-1][0:col] + " " + lines[e.line-1][e.col:]
 				fmt.Printf("%s\n", lines[e.line-1])
 
 				for i := range l {
 					if l[i].line == e.line && l[i].col > e.col {
-						l[i].col -= 1
+						l[i].col -= (e.col - col) - 1
 					}
 				}
 			}
